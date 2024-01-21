@@ -2,7 +2,7 @@
 Golang library for reading and writing Apache NiFi FlowFile v3
 
 
-## Example code
+## Reading NiFi flowfile v3 with goflowfilev3
 ```
 package main
 
@@ -44,3 +44,38 @@ func main() {
 
 ```
 
+## Writing NiFi flowfile v3 with goflowfilev3
+```
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"os"
+
+	"github.com/define42/goflowfilev3"
+)
+
+func main() {
+	packager := goflowfilev3.NewFlowFilePackagerV3()
+	fileContent := "Hello, NiFi!"
+	attributes := map[string]string{
+		"Author": "John Doe",
+		"Type":   "Example",
+	}
+
+	file, err := os.Create("flowfile.bin")
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	err = packager.PackageFlowFile(bytes.NewReader([]byte(fileContent)), file, attributes, int64(len(fileContent)))
+	if err != nil {
+		fmt.Println("Error creating flow file:", err)
+		return
+	}
+}
+
+```
