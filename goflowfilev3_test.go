@@ -76,7 +76,7 @@ func TestReadFile(t *testing.T) {
 }
 
 func Test_PackageFlowFile(t *testing.T) {
-	packager := &FlowFilePackagerV3{}
+	packager := NewFlowFilePackagerV3()
 	var testData = []byte("test data")
 	testAttributes := map[string]string{
 		"key1": "value1",

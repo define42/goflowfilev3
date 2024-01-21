@@ -14,6 +14,10 @@ const (
 	maxValue2Bytes    = 65535
 )
 
+func NewFlowFilePackagerV3() *FlowFilePackagerV3 {
+	return &FlowFilePackagerV3{}
+}
+
 // FlowFilePackagerV3 implements the packaging of NiFi FlowFile V3
 type FlowFilePackagerV3 struct {
 	writeBuffer [8]byte
