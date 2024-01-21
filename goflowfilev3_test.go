@@ -2,6 +2,7 @@ package goflowfilev3
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -72,4 +73,55 @@ func TestReadFile(t *testing.T) {
 		t.Fatalf("Expected EOF, got %s", err)
 	}
 
+}
+
+func Test_PackageFlowFile(t *testing.T) {
+	packager := &FlowFilePackagerV3{}
+	var testData = []byte("test data")
+	testAttributes := map[string]string{
+		"key1": "value1",
+		"key2": "value2",
+	}
+
+	testCases := []struct {
+		name         string
+		inputData    []byte
+		attributes   map[string]string
+		expectedData []byte
+	}{
+		{
+			name:       "Empty Data and Attributes",
+			inputData:  testData,
+			attributes: nil,
+		},
+		{
+			name:       "Non-Empty Data and Attributes",
+			inputData:  testData,
+			attributes: testAttributes,
+		},
+	}
+
+	out := &bytes.Buffer{}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := bytes.NewReader(tc.inputData)
+
+			err := packager.PackageFlowFile(in, out, tc.attributes, int64(len(tc.inputData)))
+			if err != nil {
+				t.Errorf("PackageFlowFile() error = %v", err)
+			}
+
+		})
+	}
+
+	result := out.Bytes()
+	if !bytes.HasPrefix(result, []byte("NiFiFF3")) {
+		t.Errorf("PackageFlowFile() did not write the correct magic header")
+	}
+
+	hexResult := hex.EncodeToString(result)
+	expectedResult := "4e694669464633000000000000000000097465737420646174614e694669464633000200046b657931000676616c75653100046b657932000676616c7565320000000000000009746573742064617461"
+	if hexResult != expectedResult {
+		t.Errorf("PackageFlowFile() did not write the correct output %v", hexResult)
+	}
 }

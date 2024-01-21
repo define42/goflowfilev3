@@ -11,7 +11,78 @@ import (
 const (
 	magicHeaderLength = 7
 	magicHeader       = "NiFiFF3"
+	maxValue2Bytes    = 65535
 )
+
+// FlowFilePackagerV3 implements the packaging of NiFi FlowFile V3
+type FlowFilePackagerV3 struct {
+	writeBuffer [8]byte
+}
+
+// PackageFlowFile packages the given flow file data and attributes to the output stream
+func (p *FlowFilePackagerV3) PackageFlowFile(in io.Reader, out io.Writer, attributes map[string]string, fileSize int64) error {
+	_, err := out.Write([]byte(magicHeader))
+	if err != nil {
+		return err
+	}
+
+	if attributes == nil {
+		err = p.writeFieldLength(out, 0)
+	} else {
+		err = p.writeFieldLength(out, len(attributes))
+		if err != nil {
+			return err
+		}
+		for key, value := range attributes {
+			err = p.writeString(out, key)
+			if err != nil {
+				return err
+			}
+			err = p.writeString(out, value)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	err = p.writeLong(out, fileSize)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(out, in)
+	return err
+}
+
+func (p *FlowFilePackagerV3) writeString(out io.Writer, val string) error {
+	bytes := []byte(val)
+	err := p.writeFieldLength(out, len(bytes))
+	if err != nil {
+		return err
+	}
+	_, err = out.Write(bytes)
+	return err
+}
+
+func (p *FlowFilePackagerV3) writeFieldLength(out io.Writer, numBytes int) error {
+	if numBytes < maxValue2Bytes {
+		p.writeBuffer[0] = byte(numBytes >> 8)
+		p.writeBuffer[1] = byte(numBytes)
+		_, err := out.Write(p.writeBuffer[:2])
+		return err
+	}
+	p.writeBuffer[0] = 0xff
+	p.writeBuffer[1] = 0xff
+	binary.BigEndian.PutUint32(p.writeBuffer[2:], uint32(numBytes))
+	_, err := out.Write(p.writeBuffer[:6])
+	return err
+}
+
+func (p *FlowFilePackagerV3) writeLong(out io.Writer, val int64) error {
+	binary.BigEndian.PutUint64(p.writeBuffer[:], uint64(val))
+	_, err := out.Write(p.writeBuffer[:])
+	return err
+}
 
 type FlowFileUnpackagerV3 struct {
 	nextHeader        []byte
