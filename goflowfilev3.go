@@ -14,6 +14,23 @@ const (
 	maxValue2Bytes    = 65535
 )
 
+type limitedReader struct {
+	R io.Reader // underlying reader
+	N int64     // max bytes remaining
+}
+
+func (l *limitedReader) Read(p []byte) (n int, err error) {
+	if l.N <= 0 {
+		return 0, io.EOF // prevent reading beyond the limit
+	}
+	if int64(len(p)) > l.N {
+		p = p[0:l.N] // limit p to N bytes
+	}
+	n, err = l.R.Read(p)
+	l.N -= int64(n)
+	return
+}
+
 func NewFlowFilePackagerV3() *FlowFilePackagerV3 {
 	return &FlowFilePackagerV3{}
 }
@@ -32,6 +49,9 @@ func (p *FlowFilePackagerV3) PackageFlowFile(in io.Reader, out io.Writer, attrib
 
 	if attributes == nil {
 		err = p.writeFieldLength(out, 0)
+		if err != nil {
+			return err
+		}
 	} else {
 		err = p.writeFieldLength(out, len(attributes))
 		if err != nil {
@@ -200,6 +220,11 @@ func (ffu *FlowFileUnpackagerV3) GetData(in io.Reader, out io.Writer) error {
 		return err
 	}
 	return nil
+}
+
+// GetDataReader returns an io.Reader that will read only the expected number of bytes from input
+func (ffu *FlowFileUnpackagerV3) GetDataReader(in io.Reader) (io.Reader, error) {
+	return &limitedReader{R: in, N: ffu.expectedNumBytes}, nil
 }
 
 func (ffu *FlowFileUnpackagerV3) UnpackageFlowFile(in io.Reader) (map[string]string, error) {

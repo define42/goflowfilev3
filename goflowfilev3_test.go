@@ -125,3 +125,61 @@ func Test_PackageFlowFile(t *testing.T) {
 		t.Errorf("PackageFlowFile() did not write the correct output %v", hexResult)
 	}
 }
+
+func TestReader(t *testing.T) {
+	file, err := os.Open("testdata/dcfa9c64-d0c3-443d-a9b7-2fbb8720ddda")
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer file.Close()
+
+	unpackager := NewFlowFileUnpackagerV3()
+
+	//################## first flowfile in file
+	attributes, err := unpackager.UnpackageFlowFile(file)
+	if err != nil {
+		t.Fatalf("Error unpackaging flow file:%s", err)
+	}
+	if len(attributes) != 3 {
+		t.Fatalf("Expected 3 attributes, got %d", len(attributes))
+	}
+
+	reader, err := unpackager.GetDataReader(file)
+	if err != nil {
+		t.Fatalf("Error getting payload:%s", err)
+	}
+	// read the data from reader
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("Error reading data from reader:%s", err)
+	}
+
+	result := bytes.Compare(data, []byte("Re(3a@x<KX"))
+	if result != 0 {
+		t.Fatalf("Expected payload to be Re(3a@x<KX, got %s", data)
+	}
+
+	//################## second flowfile in file
+	attributes2, err := unpackager.UnpackageFlowFile(file)
+	if err != nil {
+		t.Fatalf("Error unpackaging flow file:%s", err)
+	}
+	if len(attributes2) != 3 {
+		t.Fatalf("Expected 3 attributes, got %d", len(attributes2))
+	}
+	reader2, err := unpackager.GetDataReader(file)
+	if err != nil {
+		t.Fatalf("Error getting payload:%s", err)
+	}
+	// read the data from reader
+	data2, err := io.ReadAll(reader2)
+	if err != nil {
+		t.Fatalf("Error reading data from reader:%s", err)
+	}
+
+	result2 := bytes.Compare(data2, []byte("Cq(/)W/wgy"))
+	if result2 != 0 {
+		t.Fatalf("Expected payload to be Cq(/)W/wgy, got %s", data2)
+	}
+}
