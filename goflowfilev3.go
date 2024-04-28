@@ -223,8 +223,8 @@ func (ffu *FlowFileUnpackagerV3) GetData(in io.Reader, out io.Writer) error {
 }
 
 // GetDataReader returns an io.Reader that will read only the expected number of bytes from input
-func (ffu *FlowFileUnpackagerV3) GetDataReader(in io.Reader) (io.Reader, error) {
-	return &limitedReader{R: in, N: ffu.expectedNumBytes}, nil
+func (ffu *FlowFileUnpackagerV3) GetDataReader(in io.Reader) (io.Reader, int64, error) {
+	return &limitedReader{R: in, N: ffu.expectedNumBytes}, ffu.expectedNumBytes, nil
 }
 
 func (ffu *FlowFileUnpackagerV3) UnpackageFlowFile(in io.Reader) (map[string]string, error) {

@@ -145,7 +145,7 @@ func TestReader(t *testing.T) {
 		t.Fatalf("Expected 3 attributes, got %d", len(attributes))
 	}
 
-	reader, err := unpackager.GetDataReader(file)
+	reader, datasize, err := unpackager.GetDataReader(file)
 	if err != nil {
 		t.Fatalf("Error getting payload:%s", err)
 	}
@@ -153,6 +153,9 @@ func TestReader(t *testing.T) {
 	data, err := io.ReadAll(reader)
 	if err != nil {
 		t.Fatalf("Error reading data from reader:%s", err)
+	}
+	if datasize != 10 {
+		t.Fatalf("Expected data size to be 10, got %d", datasize)
 	}
 
 	result := bytes.Compare(data, []byte("Re(3a@x<KX"))
@@ -168,10 +171,14 @@ func TestReader(t *testing.T) {
 	if len(attributes2) != 3 {
 		t.Fatalf("Expected 3 attributes, got %d", len(attributes2))
 	}
-	reader2, err := unpackager.GetDataReader(file)
+	reader2, datasize2, err := unpackager.GetDataReader(file)
 	if err != nil {
 		t.Fatalf("Error getting payload:%s", err)
 	}
+	if datasize2 != 10 {
+		t.Fatalf("Expected data size to be 10, got %d", datasize2)
+	}
+
 	// read the data from reader
 	data2, err := io.ReadAll(reader2)
 	if err != nil {
