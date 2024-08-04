@@ -78,9 +78,10 @@ func TestReadFile(t *testing.T) {
 func Test_PackageFlowFile(t *testing.T) {
 	packager := NewFlowFilePackagerV3()
 	var testData = []byte("test data")
+
+	// warning: the order of the attributes is not guaranteed - the map is unordered
 	testAttributes := map[string]string{
 		"key1": "value1",
-		"key2": "value2",
 	}
 
 	testCases := []struct {
@@ -120,7 +121,7 @@ func Test_PackageFlowFile(t *testing.T) {
 	}
 
 	hexResult := hex.EncodeToString(result)
-	expectedResult := "4e694669464633000000000000000000097465737420646174614e694669464633000200046b657931000676616c75653100046b657932000676616c7565320000000000000009746573742064617461"
+	expectedResult := "4e694669464633000000000000000000097465737420646174614e694669464633000100046b657931000676616c7565310000000000000009746573742064617461"
 	if hexResult != expectedResult {
 		t.Errorf("PackageFlowFile() did not write the correct output %v", hexResult)
 	}

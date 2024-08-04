@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"unicode/utf8"
 )
@@ -74,8 +75,14 @@ func (p *FlowFilePackagerV3) PackageFlowFile(in io.Reader, out io.Writer, attrib
 		return err
 	}
 
-	_, err = io.Copy(out, in)
-	return err
+	n, err := io.CopyN(out, in, fileSize)
+	if err != nil {
+		return err
+	}
+	if n != fileSize {
+		return fmt.Errorf("expected to copy %d bytes, but only copied %d bytes", fileSize, n)
+	}
+	return nil
 }
 
 func (p *FlowFilePackagerV3) writeString(out io.Writer, val string) error {
