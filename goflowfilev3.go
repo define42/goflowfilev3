@@ -148,7 +148,7 @@ func (ffu *FlowFileUnpackagerV3) ReadString(in io.Reader) (string, error) {
 		return "", err
 	}
 	if length == 0 {
-		return "", errors.New("string length cannot be zero")
+		return "", nil
 	}
 	bytes := make([]byte, length)
 	err = ffu.FillBuffer(in, bytes, length)
